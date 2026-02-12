@@ -1,0 +1,7 @@
+{
+  "name": "panam",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
