@@ -10,7 +10,9 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
+import homeIcon from './components/icons/home.svg';
+import rupeeIcon from './components/icons/rupee.svg';
+import youIcon from './components/icons/you.svg';
 import Home from './pages/Home';
 import Money from './pages/Money';
 import You from './pages/You';
@@ -67,15 +69,15 @@ const App: React.FC = () => (
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="home" href="/home">
-            <IonIcon aria-hidden="true" icon={triangle} />
+            <IonIcon aria-hidden="true" icon={homeIcon} />
             <IonLabel>Home</IonLabel>
           </IonTabButton>
           <IonTabButton tab="money" href="/money">
-            <IonIcon aria-hidden="true" icon={ellipse} />
+            <IonIcon aria-hidden="true" icon={rupeeIcon} />
             <IonLabel>Money</IonLabel>
           </IonTabButton>
           <IonTabButton tab="you" href="/you">
-            <IonIcon aria-hidden="true" icon={square} />
+            <IonIcon aria-hidden="true" icon={youIcon} />
             <IonLabel>You</IonLabel>
           </IonTabButton>
         </IonTabBar>
