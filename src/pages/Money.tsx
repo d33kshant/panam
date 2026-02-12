@@ -1,5 +1,6 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
+import { IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { add } from 'ionicons/icons';
+import Transactions from '../components/Transactions';
 
 const Money: React.FC = () => {
     return (
@@ -15,7 +16,12 @@ const Money: React.FC = () => {
                         <IonTitle size="large">Money</IonTitle>
                     </IonToolbar>
                 </IonHeader>
-                <ExploreContainer name="Money page" />
+                <Transactions />
+                <IonFab slot="fixed" vertical="bottom" horizontal="end" className="ion-margin">
+                    <IonFabButton>
+                        <IonIcon icon={add} />
+                    </IonFabButton>
+                </IonFab>
             </IonContent>
         </IonPage>
     );
