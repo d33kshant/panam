@@ -3,9 +3,18 @@ import { IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonTitle
 import { add } from 'ionicons/icons';
 import Transactions from '../components/Transactions';
 import AddTransactionModal from '../components/AddTransactionModal';
+import ViewTransactionModal from '../components/ViewTransactionModal';
+import { Transaction } from '../services/TransactionService';
 
 const Money: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
+    const handleTransactionClick = (transaction: Transaction) => {
+        setSelectedTransaction(transaction);
+        setIsViewModalOpen(true);
+    };
 
     return (
         <IonPage>
@@ -20,14 +29,19 @@ const Money: React.FC = () => {
                         <IonTitle size="large">Money</IonTitle>
                     </IonToolbar>
                 </IonHeader>
-                <Transactions />
+                <Transactions onTransactionClick={handleTransactionClick} />
                 <IonFab slot="fixed" vertical="bottom" horizontal="end" className="ion-margin">
-                    <IonFabButton size="small" onClick={() => setIsModalOpen(true)}>
+                    <IonFabButton size="small" onClick={() => setIsAddModalOpen(true)}>
                         <IonIcon icon={add} />
                     </IonFabButton>
                 </IonFab>
             </IonContent>
-            <AddTransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+            <ViewTransactionModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                transaction={selectedTransaction}
+            />
         </IonPage>
     );
 };

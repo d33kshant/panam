@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
     IonCard,
     IonCardContent,
@@ -11,17 +12,27 @@ import {
     IonSkeletonText,
 } from '@ionic/react';
 import receiptIcon from './icons/receipt.svg';
+import { Transaction, TransactionService } from '../services/TransactionService';
 
-interface Transaction {
-    id: number;
-    title: string;
-    subtitle: string;
-    amount: string;
+interface TransactionsProps {
+    onTransactionClick?: (transaction: Transaction) => void;
 }
 
-const transactions: Transaction[] = [];
+const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick }) => {
+    const [transactions, setTransactions] = useState<Transaction[]>(TransactionService.getAll());
 
-const Transactions: React.FC = () => {
+    useEffect(() => {
+        const unsubscribe = TransactionService.subscribe(() => {
+            setTransactions(TransactionService.getAll());
+        });
+        return unsubscribe;
+    }, []);
+
+    const formatAmount = (tx: Transaction) => {
+        const prefix = tx.type === 'income' ? '+' : '-';
+        return `${prefix} ₹${tx.amount.toLocaleString()}`;
+    };
+
     return (
         <IonCard>
             <IonListHeader>
@@ -37,7 +48,12 @@ const Transactions: React.FC = () => {
             ) : (
                 <IonList>
                     {transactions.map((tx) => (
-                        <IonItem key={tx.id} button detail>
+                        <IonItem
+                            key={tx.id}
+                            button
+                            detail
+                            onClick={() => onTransactionClick?.(tx)}
+                        >
                             <IonAvatar slot="start">
                                 <IonSkeletonText />
                             </IonAvatar>
@@ -45,7 +61,12 @@ const Transactions: React.FC = () => {
                                 <h3>{tx.title}</h3>
                                 <p>{tx.subtitle}</p>
                             </IonLabel>
-                            <IonLabel slot="end">{tx.amount}</IonLabel>
+                            <IonLabel
+                                slot="end"
+                                color={tx.type === 'income' ? 'success' : 'danger'}
+                            >
+                                {formatAmount(tx)}
+                            </IonLabel>
                         </IonItem>
                     ))}
                 </IonList>

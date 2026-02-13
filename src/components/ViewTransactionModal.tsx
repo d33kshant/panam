@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     IonModal,
     IonHeader,
@@ -9,41 +9,54 @@ import {
     IonButtons,
     IonIcon,
     IonItem,
+    IonLabel,
     IonInput,
     IonSelect,
     IonSelectOption,
     IonList,
 } from '@ionic/react';
-import addIcon from './icons/add.svg';
-import { TransactionService } from '../services/TransactionService';
+import removeIcon from './icons/remove.svg';
+import checkIcon from './icons/check.svg';
+import { Transaction, TransactionService } from '../services/TransactionService';
 
-interface AddTransactionModalProps {
+interface ViewTransactionModalProps {
     isOpen: boolean;
     onClose: () => void;
+    transaction: Transaction | null;
 }
 
-const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose }) => {
+const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onClose, transaction }) => {
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState('');
 
-    const handleAdd = () => {
-        if (!title || !amount) return;
-        TransactionService.create({
+    useEffect(() => {
+        if (transaction) {
+            setTitle(transaction.title);
+            setSubtitle(transaction.subtitle);
+            setAmount(String(transaction.amount));
+            setType(transaction.type);
+            setDate(transaction.date);
+        }
+    }, [transaction]);
+
+    const handleUpdate = () => {
+        if (!transaction) return;
+        TransactionService.update(transaction.id, {
             title,
             subtitle,
             amount: parseFloat(amount) || 0,
             type,
             date,
         });
-        // Reset form
-        setTitle('');
-        setSubtitle('');
-        setAmount('');
-        setType('expense');
-        setDate(new Date().toISOString().split('T')[0]);
+        onClose();
+    };
+
+    const handleDelete = () => {
+        if (!transaction) return;
+        TransactionService.delete(transaction.id);
         onClose();
     };
 
@@ -51,7 +64,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         <IonModal isOpen={isOpen} onDidDismiss={onClose}>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Add Transaction</IonTitle>
+                    <IonTitle>View Transaction</IonTitle>
                     <IonButtons slot="end">
                         <IonButton onClick={onClose}>Close</IonButton>
                     </IonButtons>
@@ -63,7 +76,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                         <IonInput
                             label="Title"
                             labelPlacement="stacked"
-                            placeholder="e.g. Grocery Shopping"
                             value={title}
                             onIonInput={(e) => setTitle(e.detail.value || '')}
                         />
@@ -72,7 +84,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                         <IonInput
                             label="Description"
                             labelPlacement="stacked"
-                            placeholder="e.g. Bought vegetables"
                             value={subtitle}
                             onIonInput={(e) => setSubtitle(e.detail.value || '')}
                         />
@@ -82,7 +93,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                             label="Amount"
                             labelPlacement="stacked"
                             type="number"
-                            placeholder="0"
                             value={amount}
                             onIonInput={(e) => setAmount(e.detail.value || '')}
                         />
@@ -114,10 +124,16 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                     bottom: '16px',
                     left: '16px',
                     right: '16px',
+                    display: 'flex',
+                    gap: '12px',
                 }}>
-                    <IonButton expand="block" onClick={handleAdd}>
-                        <IonIcon slot="start" icon={addIcon} />
-                        Add
+                    <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1 }}>
+                        <IonIcon slot="start" icon={checkIcon} />
+                        Save
+                    </IonButton>
+                    <IonButton expand="block" color="danger" onClick={handleDelete} style={{ flex: 1 }}>
+                        <IonIcon slot="start" icon={removeIcon} />
+                        Delete
                     </IonButton>
                 </div>
             </IonContent>
@@ -125,4 +141,4 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
     );
 };
 
-export default AddTransactionModal;
+export default ViewTransactionModal;
