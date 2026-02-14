@@ -5,9 +5,10 @@ export interface Transaction {
     amount: number;
     type: 'income' | 'expense';
     date: string;
+    categoryId?: number;
 }
 
-let nextId = 4;
+let nextId = 1;
 
 let transactions: Transaction[] = [];
 

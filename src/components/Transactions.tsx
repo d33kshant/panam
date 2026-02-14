@@ -9,10 +9,10 @@ import {
     IonButton,
     IonItem,
     IonAvatar,
-    IonSkeletonText,
 } from '@ionic/react';
 import receiptIcon from './icons/receipt.svg';
 import { Transaction, TransactionService } from '../services/TransactionService';
+import { CategoryService, categoryIcons } from '../services/CategoryService';
 
 interface TransactionsProps {
     onTransactionClick?: (transaction: Transaction) => void;
@@ -33,6 +33,13 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick }) => {
         return `${prefix} ₹${tx.amount.toLocaleString()}`;
     };
 
+    const getCategoryIcon = (categoryId?: number) => {
+        if (!categoryId) return null;
+        const category = CategoryService.getById(categoryId);
+        if (!category) return null;
+        return categoryIcons[category.icon];
+    };
+
     return (
         <IonCard>
             <IonListHeader>
@@ -47,28 +54,40 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick }) => {
                 </IonCardContent>
             ) : (
                 <IonList>
-                    {transactions.map((tx) => (
-                        <IonItem
-                            key={tx.id}
-                            button
-                            detail
-                            onClick={() => onTransactionClick?.(tx)}
-                        >
-                            <IonAvatar slot="start">
-                                <IonSkeletonText />
-                            </IonAvatar>
-                            <IonLabel>
-                                <h3>{tx.title}</h3>
-                                <p>{tx.subtitle}</p>
-                            </IonLabel>
-                            <IonLabel
-                                slot="end"
-                                color={tx.type === 'income' ? 'success' : 'danger'}
+                    {transactions.map((tx) => {
+                        const catIcon = getCategoryIcon(tx.categoryId);
+                        return (
+                            <IonItem
+                                key={tx.id}
+                                button
+                                detail
+                                onClick={() => onTransactionClick?.(tx)}
                             >
-                                {formatAmount(tx)}
-                            </IonLabel>
-                        </IonItem>
-                    ))}
+                                <IonAvatar slot="start" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: 'var(--ion-background-color-step-200)',
+                                }}>
+                                    {catIcon ? (
+                                        <IonIcon icon={catIcon} />
+                                    ) : (
+                                        <IonIcon icon={receiptIcon} />
+                                    )}
+                                </IonAvatar>
+                                <IonLabel>
+                                    <h3>{tx.title}</h3>
+                                    <p>{tx.subtitle}</p>
+                                </IonLabel>
+                                <IonLabel
+                                    slot="end"
+                                    color={tx.type === 'income' ? 'success' : 'danger'}
+                                >
+                                    {formatAmount(tx)}
+                                </IonLabel>
+                            </IonItem>
+                        );
+                    })}
                 </IonList>
             )}
         </IonCard>

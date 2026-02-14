@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     IonModal,
     IonHeader,
@@ -16,6 +16,7 @@ import {
 } from '@ionic/react';
 import addIcon from './icons/add.svg';
 import { TransactionService } from '../services/TransactionService';
+import { Category, CategoryService, DEFAULT_CATEGORY_ID } from '../services/CategoryService';
 
 interface AddTransactionModalProps {
     isOpen: boolean;
@@ -28,6 +29,15 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [categoryId, setCategoryId] = useState<number | undefined>(DEFAULT_CATEGORY_ID);
+    const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
+
+    useEffect(() => {
+        const unsubscribe = CategoryService.subscribe(() => {
+            setCategories(CategoryService.getAll());
+        });
+        return unsubscribe;
+    }, []);
 
     const handleAdd = () => {
         if (!title || !amount) return;
@@ -37,6 +47,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
             amount: parseFloat(amount) || 0,
             type,
             date,
+            categoryId,
         });
         // Reset form
         setTitle('');
@@ -44,6 +55,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         setAmount('');
         setType('expense');
         setDate(new Date().toISOString().split('T')[0]);
+        setCategoryId(DEFAULT_CATEGORY_ID);
         onClose();
     };
 
@@ -96,6 +108,20 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                         >
                             <IonSelectOption value="income">Income</IonSelectOption>
                             <IonSelectOption value="expense">Expense</IonSelectOption>
+                        </IonSelect>
+                    </IonItem>
+                    <IonItem>
+                        <IonSelect
+                            label="Category"
+                            labelPlacement="stacked"
+                            value={categoryId}
+                            onIonChange={(e) => setCategoryId(e.detail.value)}
+                        >
+                            {categories.map((cat) => (
+                                <IonSelectOption key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                </IonSelectOption>
+                            ))}
                         </IonSelect>
                     </IonItem>
                     <IonItem>

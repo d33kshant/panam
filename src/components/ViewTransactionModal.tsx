@@ -18,6 +18,7 @@ import {
 import removeIcon from './icons/remove.svg';
 import checkIcon from './icons/check.svg';
 import { Transaction, TransactionService } from '../services/TransactionService';
+import { Category, CategoryService } from '../services/CategoryService';
 
 interface ViewTransactionModalProps {
     isOpen: boolean;
@@ -31,6 +32,15 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [date, setDate] = useState('');
+    const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+    const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
+
+    useEffect(() => {
+        const unsubscribe = CategoryService.subscribe(() => {
+            setCategories(CategoryService.getAll());
+        });
+        return unsubscribe;
+    }, []);
 
     useEffect(() => {
         if (transaction) {
@@ -39,6 +49,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
             setAmount(String(transaction.amount));
             setType(transaction.type);
             setDate(transaction.date);
+            setCategoryId(transaction.categoryId);
         }
     }, [transaction]);
 
@@ -50,6 +61,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
             amount: parseFloat(amount) || 0,
             type,
             date,
+            categoryId,
         });
         onClose();
     };
@@ -106,6 +118,20 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
                         >
                             <IonSelectOption value="income">Income</IonSelectOption>
                             <IonSelectOption value="expense">Expense</IonSelectOption>
+                        </IonSelect>
+                    </IonItem>
+                    <IonItem>
+                        <IonSelect
+                            label="Category"
+                            labelPlacement="stacked"
+                            value={categoryId}
+                            onIonChange={(e) => setCategoryId(e.detail.value)}
+                        >
+                            {categories.map((cat) => (
+                                <IonSelectOption key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                </IonSelectOption>
+                            ))}
                         </IonSelect>
                     </IonItem>
                     <IonItem>
