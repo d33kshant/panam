@@ -29,7 +29,7 @@ const Money: React.FC = () => {
                         <IonTitle size="large">Money</IonTitle>
                     </IonToolbar>
                 </IonHeader>
-                <Transactions onTransactionClick={handleTransactionClick} />
+                <Transactions onTransactionClick={handleTransactionClick} limit={10} />
                 <IonFab slot="fixed" vertical="bottom" horizontal="end" className="ion-margin">
                     <IonFabButton size="small" onClick={() => setIsAddModalOpen(true)}>
                         <IonIcon icon={add} />

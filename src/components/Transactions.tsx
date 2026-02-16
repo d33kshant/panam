@@ -16,9 +16,10 @@ import { CategoryService, categoryIcons } from '../services/CategoryService';
 
 interface TransactionsProps {
     onTransactionClick?: (transaction: Transaction) => void;
+    limit?: number;
 }
 
-const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick }) => {
+const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick, limit }) => {
     const [transactions, setTransactions] = useState<Transaction[]>(TransactionService.getAll());
 
     useEffect(() => {
@@ -44,7 +45,9 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick }) => {
         <IonCard>
             <IonListHeader>
                 <IonLabel><h2><strong>Transactions</strong></h2></IonLabel>
-                <IonButton>See all</IonButton>
+                {limit && (
+                    <IonButton routerLink="/money/transactions">See all</IonButton>
+                )}
             </IonListHeader>
             {transactions.length === 0 ? (
                 <IonCardContent className="ion-text-center ion-padding">
@@ -54,7 +57,7 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick }) => {
                 </IonCardContent>
             ) : (
                 <IonList>
-                    {transactions.map((tx) => {
+                    {(limit ? transactions.slice(0, limit) : transactions).map((tx) => {
                         const catIcon = getCategoryIcon(tx.categoryId);
                         return (
                             <IonItem

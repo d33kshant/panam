@@ -17,6 +17,7 @@ import Home from './pages/Home';
 import Money from './pages/Money';
 import You from './pages/You';
 import CategoriesPage from './pages/CategoriesPage';
+import TransactionsPage from './pages/TransactionsPage';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -57,6 +58,9 @@ const App: React.FC = () => (
         <IonRouterOutlet>
           <Route exact path="/home">
             <Home />
+          </Route>
+          <Route exact path="/money/transactions">
+            <TransactionsPage />
           </Route>
           <Route exact path="/money">
             <Money />
