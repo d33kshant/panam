@@ -30,8 +30,8 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick, limit }
     }, []);
 
     const formatAmount = (tx: Transaction) => {
-        const prefix = tx.type === 'income' ? '+' : '-';
-        return `${prefix} ₹${tx.amount.toLocaleString()}`;
+        const prefix = tx.type === 'income' ? '+ ' : '';
+        return `${prefix}₹${tx.amount.toLocaleString()}`;
     };
 
     const getCategoryIcon = (categoryId?: number) => {
@@ -84,7 +84,7 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick, limit }
                                 </IonLabel>
                                 <IonLabel
                                     slot="end"
-                                    color={tx.type === 'income' ? 'success' : 'danger'}
+                                    color={tx.type === 'income' ? 'success' : undefined}
                                 >
                                     {formatAmount(tx)}
                                 </IonLabel>

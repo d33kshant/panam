@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Redirect, Route, useLocation } from 'react-router-dom';
 import {
   IonApp,
   IonIcon,
@@ -43,53 +43,67 @@ import '@ionic/react/css/display.css';
  */
 
 /* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
+import '@ionic/react/css/palettes/dark.class.css';
+/* import '@ionic/react/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import './theme/variables.css';
 
+import { ThemeService } from './services/ThemeService';
+
 setupIonicReact();
+ThemeService.init();
+
+const TOP_LEVEL_ROUTES = ['/home', '/money', '/you'];
+
+const AppTabs: React.FC = () => {
+  const location = useLocation();
+  const showTabBar = TOP_LEVEL_ROUTES.includes(location.pathname);
+
+  return (
+    <IonTabs>
+      <IonRouterOutlet>
+        <Route exact path="/home">
+          <Home />
+        </Route>
+        <Route exact path="/money/transactions">
+          <TransactionsPage />
+        </Route>
+        <Route exact path="/money">
+          <Money />
+        </Route>
+        <Route exact path="/you/categories">
+          <CategoriesPage />
+        </Route>
+        <Route exact path="/you">
+          <You />
+        </Route>
+        <Route exact path="/">
+          <Redirect to="/home" />
+        </Route>
+      </IonRouterOutlet>
+      <IonTabBar slot="bottom" style={showTabBar ? undefined : { display: 'none' }}>
+        <IonTabButton tab="home" href="/home">
+          <IonIcon aria-hidden="true" icon={homeIcon} />
+          <IonLabel>Home</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="money" href="/money">
+          <IonIcon aria-hidden="true" icon={rupeeIcon} />
+          <IonLabel>Money</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="you" href="/you">
+          <IonIcon aria-hidden="true" icon={youIcon} />
+          <IonLabel>You</IonLabel>
+        </IonTabButton>
+      </IonTabBar>
+    </IonTabs>
+  );
+};
 
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route exact path="/home">
-            <Home />
-          </Route>
-          <Route exact path="/money/transactions">
-            <TransactionsPage />
-          </Route>
-          <Route exact path="/money">
-            <Money />
-          </Route>
-          <Route exact path="/you/categories">
-            <CategoriesPage />
-          </Route>
-          <Route exact path="/you">
-            <You />
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/home" />
-          </Route>
-        </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="home" href="/home">
-            <IonIcon aria-hidden="true" icon={homeIcon} />
-            <IonLabel>Home</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="money" href="/money">
-            <IonIcon aria-hidden="true" icon={rupeeIcon} />
-            <IonLabel>Money</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="you" href="/you">
-            <IonIcon aria-hidden="true" icon={youIcon} />
-            <IonLabel>You</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
+      <AppTabs />
     </IonReactRouter>
   </IonApp>
 );

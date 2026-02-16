@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
     IonContent,
-    IonFab,
-    IonFabButton,
     IonHeader,
     IonIcon,
     IonPage,
@@ -18,15 +16,12 @@ import {
     IonAvatar,
     IonLabel,
 } from '@ionic/react';
-import { add } from 'ionicons/icons';
 import receiptIcon from '../components/icons/receipt.svg';
-import AddTransactionModal from '../components/AddTransactionModal';
 import ViewTransactionModal from '../components/ViewTransactionModal';
 import { Transaction, TransactionService } from '../services/TransactionService';
 import { CategoryService, categoryIcons } from '../services/CategoryService';
 
 const TransactionsPage: React.FC = () => {
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [transactions, setTransactions] = useState<Transaction[]>(TransactionService.getAll());
@@ -45,8 +40,8 @@ const TransactionsPage: React.FC = () => {
     };
 
     const formatAmount = (tx: Transaction) => {
-        const prefix = tx.type === 'income' ? '+' : '-';
-        return `${prefix} ₹${tx.amount.toLocaleString()}`;
+        const prefix = tx.type === 'income' ? '+ ' : '';
+        return `${prefix}₹${tx.amount.toLocaleString()}`;
     };
 
     const getCategoryIcon = (categoryId?: number) => {
@@ -129,7 +124,7 @@ const TransactionsPage: React.FC = () => {
                                         </IonLabel>
                                         <IonLabel
                                             slot="end"
-                                            color={tx.type === 'income' ? 'success' : 'danger'}
+                                            color={tx.type === 'income' ? 'success' : undefined}
                                         >
                                             {formatAmount(tx)}
                                         </IonLabel>
@@ -139,13 +134,7 @@ const TransactionsPage: React.FC = () => {
                         </IonList>
                     )}
                 </IonCard>
-                <IonFab slot="fixed" vertical="bottom" horizontal="end" className="ion-margin">
-                    <IonFabButton size="small" onClick={() => setIsAddModalOpen(true)}>
-                        <IonIcon icon={add} />
-                    </IonFabButton>
-                </IonFab>
             </IonContent>
-            <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
             <ViewTransactionModal
                 isOpen={isViewModalOpen}
                 onClose={() => setIsViewModalOpen(false)}
