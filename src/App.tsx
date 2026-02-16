@@ -16,6 +16,7 @@ import youIcon from './components/icons/you.svg';
 import Home from './pages/Home';
 import Money from './pages/Money';
 import You from './pages/You';
+import CategoriesPage from './pages/CategoriesPage';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -60,7 +61,10 @@ const App: React.FC = () => (
           <Route exact path="/money">
             <Money />
           </Route>
-          <Route path="/you">
+          <Route exact path="/you/categories">
+            <CategoriesPage />
+          </Route>
+          <Route exact path="/you">
             <You />
           </Route>
           <Route exact path="/">
