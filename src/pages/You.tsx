@@ -17,6 +17,8 @@ import {
 import categoriesIcon from '../components/icons/categories.svg';
 import themeIcon from '../components/icons/theme.svg';
 import { ThemeService, ThemeMode } from '../services/ThemeService';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthService } from '../services/AuthService';
 
 const THEME_LABELS: Record<ThemeMode, string> = {
     light: 'Light',
@@ -25,8 +27,27 @@ const THEME_LABELS: Record<ThemeMode, string> = {
 };
 
 const You: React.FC = () => {
+    const { user } = useAuth();
     const [currentTheme, setCurrentTheme] = useState<ThemeMode>(ThemeService.get());
     const [presentActionSheet] = useIonActionSheet();
+
+    const handleUserClick = () => {
+        presentActionSheet({
+            buttons: [
+                {
+                    text: 'Logout',
+                    role: 'destructive',
+                    handler: () => {
+                        AuthService.signOut();
+                    },
+                },
+                {
+                    text: 'Cancel',
+                    role: 'cancel',
+                },
+            ],
+        });
+    };
 
     const handleThemeClick = () => {
         presentActionSheet({
@@ -74,6 +95,17 @@ const You: React.FC = () => {
                         <IonTitle size="large">You</IonTitle>
                     </IonToolbar>
                 </IonHeader>
+                <IonCard>
+                    <IonItem button detail lines="none" onClick={handleUserClick}>
+                        <IonAvatar slot="start">
+                            <img src={user?.photoURL || ''} alt="avatar" />
+                        </IonAvatar>
+                        <IonLabel>
+                            <h2>{user?.displayName || 'User'}</h2>
+                            <p>{user?.email || ''}</p>
+                        </IonLabel>
+                    </IonItem>
+                </IonCard>
                 <IonCard>
                     <IonListHeader>
                         <IonLabel><h2><strong>Preference</strong></h2></IonLabel>
