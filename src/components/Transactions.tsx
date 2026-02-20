@@ -34,7 +34,7 @@ const Transactions: React.FC<TransactionsProps> = ({ onTransactionClick, limit }
         return `${prefix}₹${tx.amount.toLocaleString()}`;
     };
 
-    const getCategoryIcon = (categoryId?: number) => {
+    const getCategoryIcon = (categoryId?: string) => {
         if (!categoryId) return null;
         const category = CategoryService.getById(categoryId);
         if (!category) return null;

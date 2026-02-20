@@ -1,8 +1,23 @@
+import {
+    collection,
+    doc,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    onSnapshot,
+    query,
+    where,
+    Unsubscribe,
+} from 'firebase/firestore';
+import { db } from './firebase';
+
 export interface Category {
-    id: number;
+    id: string;
     name: string;
     description: string;
     icon: string;
+    author: string;
+    amount: number;
 }
 
 // Available category icons mapped by key
@@ -22,58 +37,72 @@ export const categoryIcons: Record<string, string> = {
     misc: miscIcon,
 };
 
-export const DEFAULT_CATEGORY_ID = 6;
+export const DEFAULT_CATEGORY_ID = '';
 
-let nextId = 7;
-
-let categories: Category[] = [
-    { id: 1, name: 'Food', description: 'Dining out and restaurants', icon: 'food' },
-    { id: 2, name: 'Transport', description: 'Cab, bus, fuel expenses', icon: 'transport' },
-    { id: 3, name: 'Shopping', description: 'Clothing and accessories', icon: 'shopping' },
-    { id: 4, name: 'Grocery', description: 'Daily groceries and essentials', icon: 'grocery' },
-    { id: 5, name: 'Bills', description: 'Electricity, water, internet', icon: 'bills' },
-    { id: 6, name: 'Misc', description: 'Miscellaneous expenses', icon: 'misc' },
-];
-
+let categories: Category[] = [];
 let listeners: (() => void)[] = [];
+let firestoreUnsubscribe: Unsubscribe | null = null;
+let currentUserId: string | null = null;
 
 function notifyListeners() {
     listeners.forEach((listener) => listener());
 }
 
 export const CategoryService = {
+    /** Start listening to categories for a specific user */
+    listen(userId: string) {
+        // Avoid re-subscribing to the same user
+        if (currentUserId === userId && firestoreUnsubscribe) return;
+
+        // Cleanup previous listener
+        if (firestoreUnsubscribe) {
+            firestoreUnsubscribe();
+        }
+
+        currentUserId = userId;
+        const q = query(collection(db, 'categories'), where('author', '==', userId));
+
+        firestoreUnsubscribe = onSnapshot(q, (snapshot) => {
+            categories = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            })) as Category[];
+            notifyListeners();
+        });
+    },
+
+    /** Stop listening (call on logout) */
+    stopListening() {
+        if (firestoreUnsubscribe) {
+            firestoreUnsubscribe();
+            firestoreUnsubscribe = null;
+        }
+        currentUserId = null;
+        categories = [];
+        notifyListeners();
+    },
+
     getAll(): Category[] {
         return [...categories];
     },
 
-    getById(id: number): Category | undefined {
+    getById(id: string): Category | undefined {
         return categories.find((cat) => cat.id === id);
     },
 
-    create(data: Omit<Category, 'id'>): Category {
-        const newCategory: Category = { ...data, id: nextId++ };
-        categories = [newCategory, ...categories];
-        notifyListeners();
-        return newCategory;
+    async create(data: Omit<Category, 'id'>): Promise<Category> {
+        const docRef = await addDoc(collection(db, 'categories'), data);
+        return { ...data, id: docRef.id };
     },
 
-    update(id: number, data: Partial<Omit<Category, 'id'>>): Category | undefined {
-        const index = categories.findIndex((cat) => cat.id === id);
-        if (index === -1) return undefined;
-        categories[index] = { ...categories[index], ...data };
-        categories = [...categories];
-        notifyListeners();
-        return categories[index];
+    async update(id: string, data: Partial<Omit<Category, 'id'>>): Promise<void> {
+        const docRef = doc(db, 'categories', id);
+        await updateDoc(docRef, data);
     },
 
-    delete(id: number): boolean {
-        const initialLength = categories.length;
-        categories = categories.filter((cat) => cat.id !== id);
-        if (categories.length !== initialLength) {
-            notifyListeners();
-            return true;
-        }
-        return false;
+    async delete(id: string): Promise<void> {
+        const docRef = doc(db, 'categories', id);
+        await deleteDoc(docRef);
     },
 
     subscribe(listener: () => void): () => void {

@@ -9,7 +9,6 @@ import {
     IonButtons,
     IonIcon,
     IonItem,
-    IonLabel,
     IonInput,
     IonSelect,
     IonSelectOption,
@@ -32,7 +31,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [date, setDate] = useState('');
-    const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+    const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
     const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
 
     useEffect(() => {
@@ -53,9 +52,9 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
         }
     }, [transaction]);
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (!transaction) return;
-        TransactionService.update(transaction.id, {
+        await TransactionService.update(transaction.id, {
             title,
             subtitle,
             amount: parseFloat(amount) || 0,
@@ -66,9 +65,9 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
         onClose();
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!transaction) return;
-        TransactionService.delete(transaction.id);
+        await TransactionService.delete(transaction.id);
         onClose();
     };
 

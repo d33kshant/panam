@@ -28,28 +28,31 @@ const ViewCategoryModal: React.FC<ViewCategoryModalProps> = ({ isOpen, onClose, 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState('food');
+    const [amount, setAmount] = useState('');
 
     useEffect(() => {
         if (category) {
             setName(category.name);
             setDescription(category.description);
             setIcon(category.icon);
+            setAmount(String(category.amount || 0));
         }
     }, [category]);
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (!category) return;
-        CategoryService.update(category.id, {
+        await CategoryService.update(category.id, {
             name,
             description,
             icon,
+            amount: parseFloat(amount) || 0,
         });
         onClose();
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!category) return;
-        CategoryService.delete(category.id);
+        await CategoryService.delete(category.id);
         onClose();
     };
 
@@ -79,6 +82,15 @@ const ViewCategoryModal: React.FC<ViewCategoryModalProps> = ({ isOpen, onClose, 
                             labelPlacement="stacked"
                             value={description}
                             onIonInput={(e) => setDescription(e.detail.value || '')}
+                        />
+                    </IonItem>
+                    <IonItem>
+                        <IonInput
+                            label="Monthly Budget"
+                            labelPlacement="stacked"
+                            type="number"
+                            value={amount}
+                            onIonInput={(e) => setAmount(e.detail.value || '')}
                         />
                     </IonItem>
                     <IonItem>

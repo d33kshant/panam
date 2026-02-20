@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { AuthService } from '../services/AuthService';
+import { CategoryService } from '../services/CategoryService';
+import { TransactionService } from '../services/TransactionService';
+import { GroupService } from '../services/GroupService';
 
 interface AuthContextValue {
     user: User | null;
@@ -19,6 +22,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const unsubscribe = AuthService.onAuthStateChanged((firebaseUser) => {
             setUser(firebaseUser);
             setLoading(false);
+
+            if (firebaseUser) {
+                // Start listening to Firestore data for this user
+                CategoryService.listen(firebaseUser.uid);
+                TransactionService.listen(firebaseUser.uid);
+                GroupService.listen(firebaseUser.uid);
+            } else {
+                // Stop listening on logout
+                CategoryService.stopListening();
+                TransactionService.stopListening();
+                GroupService.stopListening();
+            }
         });
         return unsubscribe;
     }, []);

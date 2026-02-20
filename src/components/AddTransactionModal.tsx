@@ -16,38 +16,52 @@ import {
 } from '@ionic/react';
 import addIcon from './icons/add.svg';
 import { TransactionService } from '../services/TransactionService';
-import { Category, CategoryService, DEFAULT_CATEGORY_ID } from '../services/CategoryService';
+import { Category, CategoryService } from '../services/CategoryService';
+import { Group, GroupService } from '../services/GroupService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AddTransactionModalProps {
     isOpen: boolean;
     onClose: () => void;
+    showGroupField?: boolean;
 }
 
-const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose }) => {
+const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose, showGroupField = true }) => {
+    const { user } = useAuth();
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [categoryId, setCategoryId] = useState<number | undefined>(DEFAULT_CATEGORY_ID);
+    const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
+    const [groupId, setGroupId] = useState<string | undefined>(undefined);
     const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
+    const [groups, setGroups] = useState<Group[]>(GroupService.getAll());
 
     useEffect(() => {
-        const unsubscribe = CategoryService.subscribe(() => {
+        const unsubCat = CategoryService.subscribe(() => {
             setCategories(CategoryService.getAll());
         });
-        return unsubscribe;
+        const unsubGroup = GroupService.subscribe(() => {
+            setGroups(GroupService.getAll());
+        });
+        return () => {
+            unsubCat();
+            unsubGroup();
+        };
     }, []);
 
-    const handleAdd = () => {
-        if (!title || !amount) return;
-        TransactionService.create({
+    const handleAdd = async () => {
+        if (!title || !amount || !user) return;
+        await TransactionService.create({
             title,
             subtitle,
             amount: parseFloat(amount) || 0,
             type,
             date,
             categoryId,
+            groupId,
+            author: user.uid,
         });
         // Reset form
         setTitle('');
@@ -55,7 +69,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         setAmount('');
         setType('expense');
         setDate(new Date().toISOString().split('T')[0]);
-        setCategoryId(DEFAULT_CATEGORY_ID);
+        setCategoryId(undefined);
+        setGroupId(undefined);
         onClose();
     };
 
@@ -124,6 +139,24 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                             ))}
                         </IonSelect>
                     </IonItem>
+                    {showGroupField && (
+                        <IonItem>
+                            <IonSelect
+                                label="Group"
+                                labelPlacement="stacked"
+                                value={groupId}
+                                onIonChange={(e) => setGroupId(e.detail.value || undefined)}
+                                placeholder="None"
+                            >
+                                <IonSelectOption value={undefined}>None</IonSelectOption>
+                                {groups.map((g) => (
+                                    <IonSelectOption key={g.id} value={g.id}>
+                                        {g.name}
+                                    </IonSelectOption>
+                                ))}
+                            </IonSelect>
+                        </IonItem>
+                    )}
                     <IonItem>
                         <IonInput
                             label="Date"

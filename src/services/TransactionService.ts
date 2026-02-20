@@ -1,56 +1,92 @@
+import {
+    collection,
+    doc,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    onSnapshot,
+    query,
+    where,
+    Unsubscribe,
+} from 'firebase/firestore';
+import { db } from './firebase';
+
 export interface Transaction {
-    id: number;
+    id: string;
     title: string;
     subtitle: string;
     amount: number;
     type: 'income' | 'expense';
     date: string;
-    categoryId?: number;
+    categoryId?: string;
+    groupId?: string;
+    author: string;
 }
 
-let nextId = 1;
-
 let transactions: Transaction[] = [];
-
 let listeners: (() => void)[] = [];
+let firestoreUnsubscribe: Unsubscribe | null = null;
+let currentUserId: string | null = null;
 
 function notifyListeners() {
     listeners.forEach((listener) => listener());
 }
 
 export const TransactionService = {
+    /** Start listening to transactions for a specific user */
+    listen(userId: string) {
+        if (currentUserId === userId && firestoreUnsubscribe) return;
+
+        if (firestoreUnsubscribe) {
+            firestoreUnsubscribe();
+        }
+
+        currentUserId = userId;
+        const q = query(collection(db, 'transactions'), where('author', '==', userId));
+
+        firestoreUnsubscribe = onSnapshot(q, (snapshot) => {
+            transactions = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            })) as Transaction[];
+            // Sort by date descending (newest first)
+            transactions.sort((a, b) => b.date.localeCompare(a.date));
+            notifyListeners();
+        });
+    },
+
+    /** Stop listening (call on logout) */
+    stopListening() {
+        if (firestoreUnsubscribe) {
+            firestoreUnsubscribe();
+            firestoreUnsubscribe = null;
+        }
+        currentUserId = null;
+        transactions = [];
+        notifyListeners();
+    },
+
     getAll(): Transaction[] {
         return [...transactions];
     },
 
-    getById(id: number): Transaction | undefined {
+    getById(id: string): Transaction | undefined {
         return transactions.find((tx) => tx.id === id);
     },
 
-    create(data: Omit<Transaction, 'id'>): Transaction {
-        const newTransaction: Transaction = { ...data, id: nextId++ };
-        transactions = [newTransaction, ...transactions];
-        notifyListeners();
-        return newTransaction;
+    async create(data: Omit<Transaction, 'id'>): Promise<Transaction> {
+        const docRef = await addDoc(collection(db, 'transactions'), data);
+        return { ...data, id: docRef.id };
     },
 
-    update(id: number, data: Partial<Omit<Transaction, 'id'>>): Transaction | undefined {
-        const index = transactions.findIndex((tx) => tx.id === id);
-        if (index === -1) return undefined;
-        transactions[index] = { ...transactions[index], ...data };
-        transactions = [...transactions];
-        notifyListeners();
-        return transactions[index];
+    async update(id: string, data: Partial<Omit<Transaction, 'id'>>): Promise<void> {
+        const docRef = doc(db, 'transactions', id);
+        await updateDoc(docRef, data);
     },
 
-    delete(id: number): boolean {
-        const initialLength = transactions.length;
-        transactions = transactions.filter((tx) => tx.id !== id);
-        if (transactions.length !== initialLength) {
-            notifyListeners();
-            return true;
-        }
-        return false;
+    async delete(id: string): Promise<void> {
+        const docRef = doc(db, 'transactions', id);
+        await deleteDoc(docRef);
     },
 
     subscribe(listener: () => void): () => void {

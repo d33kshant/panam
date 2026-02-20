@@ -76,7 +76,7 @@ const WeekChart: React.FC = () => {
 
     const chartData = useMemo(() => {
         // Build a map: categoryId -> { name, icon, dayAmounts[7] }
-        const catMap = new Map<number, { name: string; icon: string; amounts: number[]; total: number }>();
+        const catMap = new Map<string, { name: string; icon: string; amounts: number[]; total: number }>();
 
         categories.forEach((cat) => {
             catMap.set(cat.id, { name: cat.name, icon: cat.icon, amounts: new Array(7).fill(0), total: 0 });
@@ -85,7 +85,7 @@ const WeekChart: React.FC = () => {
         weekTransactions.forEach((tx) => {
             const txDate = new Date(tx.date + 'T00:00:00');
             const dayIndex = txDate.getDay();
-            const catId = tx.categoryId || 6; // default to Misc
+            const catId = tx.categoryId || '';
             if (catMap.has(catId)) {
                 const entry = catMap.get(catId)!;
                 entry.amounts[dayIndex] += tx.amount;

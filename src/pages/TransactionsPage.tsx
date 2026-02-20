@@ -44,14 +44,14 @@ const TransactionsPage: React.FC = () => {
         return `${prefix}₹${tx.amount.toLocaleString()}`;
     };
 
-    const getCategoryIcon = (categoryId?: number) => {
+    const getCategoryIcon = (categoryId?: string) => {
         if (!categoryId) return null;
         const category = CategoryService.getById(categoryId);
         if (!category) return null;
         return categoryIcons[category.icon];
     };
 
-    const getCategoryName = (categoryId?: number) => {
+    const getCategoryName = (categoryId?: string) => {
         if (!categoryId) return '';
         const category = CategoryService.getById(categoryId);
         return category?.name ?? '';

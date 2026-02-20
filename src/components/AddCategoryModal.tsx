@@ -16,6 +16,7 @@ import {
 } from '@ionic/react';
 import addIcon from './icons/add.svg';
 import { CategoryService, categoryIcons } from '../services/CategoryService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AddCategoryModalProps {
     isOpen: boolean;
@@ -23,21 +24,26 @@ interface AddCategoryModalProps {
 }
 
 const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) => {
+    const { user } = useAuth();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState('food');
+    const [amount, setAmount] = useState('');
 
-    const handleAdd = () => {
-        if (!name) return;
-        CategoryService.create({
+    const handleAdd = async () => {
+        if (!name || !user) return;
+        await CategoryService.create({
             name,
             description,
             icon,
+            author: user.uid,
+            amount: parseFloat(amount) || 0,
         });
         // Reset form
         setName('');
         setDescription('');
         setIcon('food');
+        setAmount('');
         onClose();
     };
 
@@ -69,6 +75,16 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) 
                             placeholder="e.g. Movies, games, etc."
                             value={description}
                             onIonInput={(e) => setDescription(e.detail.value || '')}
+                        />
+                    </IonItem>
+                    <IonItem>
+                        <IonInput
+                            label="Monthly Budget"
+                            labelPlacement="stacked"
+                            type="number"
+                            placeholder="0"
+                            value={amount}
+                            onIonInput={(e) => setAmount(e.detail.value || '')}
                         />
                     </IonItem>
                     <IonItem>
