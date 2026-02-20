@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Redirect, Route, useLocation } from 'react-router-dom';
 import {
     IonApp,
@@ -21,6 +22,8 @@ import You from './pages/You';
 import Auth from './pages/Auth';
 import CategoriesPage from './pages/CategoriesPage';
 import TransactionsPage from './pages/TransactionsPage';
+import GroupsPage from './pages/GroupsPage';
+import GroupPage from './pages/GroupPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 /* Core CSS required for Ionic components to work properly */
@@ -65,6 +68,11 @@ const AppTabs: React.FC = () => {
     const { user } = useAuth();
     const showTabBar = TOP_LEVEL_ROUTES.includes(location.pathname);
 
+    // Blur focused element on route change to prevent aria-hidden warning
+    useEffect(() => {
+        (document.activeElement as HTMLElement)?.blur();
+    }, [location.pathname]);
+
     return (
         <IonTabs>
             <IonRouterOutlet>
@@ -73,6 +81,12 @@ const AppTabs: React.FC = () => {
                 </Route>
                 <Route exact path="/money/transactions">
                     <TransactionsPage />
+                </Route>
+                <Route exact path="/money/groups/:groupId">
+                    <GroupPage />
+                </Route>
+                <Route exact path="/money/groups">
+                    <GroupsPage />
                 </Route>
                 <Route exact path="/money">
                     <Money />

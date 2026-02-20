@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import { add } from 'ionicons/icons';
+import { IonContent, IonButton, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import addIcon from '../components/icons/add.svg';
+import Groups from '../components/Groups';
 import Transactions from '../components/Transactions';
 import AddTransactionModal from '../components/AddTransactionModal';
 import ViewTransactionModal from '../components/ViewTransactionModal';
@@ -29,14 +30,21 @@ const Money: React.FC = () => {
                         <IonTitle size="large">Money</IonTitle>
                     </IonToolbar>
                 </IonHeader>
+                <Groups limit={5} />
                 <Transactions onTransactionClick={handleTransactionClick} limit={10} />
-                <IonFab slot="fixed" vertical="bottom" horizontal="end" className="ion-margin">
-                    <IonFabButton size="small" onClick={() => setIsAddModalOpen(true)}>
-                        <IonIcon icon={add} />
-                    </IonFabButton>
-                </IonFab>
+                <div style={{
+                    position: 'fixed',
+                    bottom: '16px',
+                    right: '16px',
+                    zIndex: 1000,
+                }}>
+                    <IonButton shape="round" onClick={() => setIsAddModalOpen(true)}>
+                        <IonIcon slot="start" icon={addIcon} />
+                        Add A Transaction
+                    </IonButton>
+                </div>
             </IonContent>
-            <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+            <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} showGroupField={false} />
             <ViewTransactionModal
                 isOpen={isViewModalOpen}
                 onClose={() => setIsViewModalOpen(false)}

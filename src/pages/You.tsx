@@ -15,6 +15,7 @@ import {
     useIonActionSheet,
 } from '@ionic/react';
 import categoriesIcon from '../components/icons/categories.svg';
+import groupIcon from '../components/icons/group.svg';
 import themeIcon from '../components/icons/theme.svg';
 import { ThemeService, ThemeMode } from '../services/ThemeService';
 import { useAuth } from '../contexts/AuthContext';
@@ -148,6 +149,20 @@ const You: React.FC = () => {
                                 <IonIcon icon={categoriesIcon} />
                             </IonAvatar>
                             <IonLabel>Categories</IonLabel>
+                        </IonItem>
+                        <IonItem button detail routerLink="/money/groups">
+                            <IonAvatar
+                                slot="start"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: 'var(--ion-background-color-step-200)',
+                                }}
+                            >
+                                <IonIcon icon={groupIcon} />
+                            </IonAvatar>
+                            <IonLabel>Groups</IonLabel>
                         </IonItem>
                     </IonList>
                 </IonCard>
