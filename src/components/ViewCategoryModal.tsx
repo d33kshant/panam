@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     IonModal,
     IonHeader,
+    IonFooter,
     IonToolbar,
     IonTitle,
     IonContent,
@@ -108,25 +109,22 @@ const ViewCategoryModal: React.FC<ViewCategoryModalProps> = ({ isOpen, onClose, 
                         </IonSelect>
                     </IonItem>
                 </IonList>
-
-                <div style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    left: '16px',
-                    right: '16px',
-                    display: 'flex',
-                    gap: '12px',
-                }}>
-                    <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1 }}>
-                        <IonIcon slot="start" icon={checkIcon} />
-                        Save
-                    </IonButton>
-                    <IonButton expand="block" color="danger" onClick={handleDelete} style={{ flex: 1 }}>
-                        <IonIcon slot="start" icon={removeIcon} />
-                        Delete
-                    </IonButton>
-                </div>
             </IonContent>
+
+            <IonFooter>
+                <IonToolbar>
+                    <div className="ion-padding" style={{ display: 'flex', gap: '12px' }}>
+                        <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1, margin: 0 }}>
+                            <IonIcon slot="start" icon={checkIcon} />
+                            Save
+                        </IonButton>
+                        <IonButton expand="block" color="danger" onClick={handleDelete} style={{ flex: 1, margin: 0 }}>
+                            <IonIcon slot="start" icon={removeIcon} />
+                            Delete
+                        </IonButton>
+                    </div>
+                </IonToolbar>
+            </IonFooter>
         </IonModal>
     );
 };

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
     IonModal,
     IonHeader,
+    IonFooter,
     IonToolbar,
     IonTitle,
     IonContent,
@@ -102,19 +103,18 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) 
                         </IonSelect>
                     </IonItem>
                 </IonList>
-
-                <div style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    left: '16px',
-                    right: '16px',
-                }}>
-                    <IonButton expand="block" onClick={handleAdd}>
-                        <IonIcon slot="start" icon={addIcon} />
-                        Add
-                    </IonButton>
-                </div>
             </IonContent>
+
+            <IonFooter>
+                <IonToolbar>
+                    <div className="ion-padding">
+                        <IonButton expand="block" onClick={handleAdd}>
+                            <IonIcon slot="start" icon={addIcon} />
+                            Add
+                        </IonButton>
+                    </div>
+                </IonToolbar>
+            </IonFooter>
         </IonModal>
     );
 };

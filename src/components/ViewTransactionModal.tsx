@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     IonModal,
     IonHeader,
+    IonFooter,
     IonToolbar,
     IonTitle,
     IonContent,
@@ -54,14 +55,24 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
 
     const handleUpdate = async () => {
         if (!transaction) return;
-        await TransactionService.update(transaction.id, {
+        const data: any = {
             title,
             subtitle,
             amount: parseFloat(amount) || 0,
             type,
             date,
-            categoryId,
-        });
+        };
+
+        // For updates, we might want to allow removing a category, but for now we'll just set it if it exists.
+        // Actually, if Firebase fails on `undefined`, we could use `null` if the user wants to clear it.
+        // But since Ionic Select doesn't output null for undefined category, we can just omit it if undefined.
+        // Or if we want to delete it: `import { deleteField } from 'firebase/firestore'` (if we could, but let's just assign).
+        // Let's just avoid passing `undefined`.
+        if (categoryId !== undefined) {
+            data.categoryId = categoryId;
+        }
+
+        await TransactionService.update(transaction.id, data);
         onClose();
     };
 
@@ -143,25 +154,22 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
                         />
                     </IonItem>
                 </IonList>
-
-                <div style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    left: '16px',
-                    right: '16px',
-                    display: 'flex',
-                    gap: '12px',
-                }}>
-                    <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1 }}>
-                        <IonIcon slot="start" icon={checkIcon} />
-                        Save
-                    </IonButton>
-                    <IonButton expand="block" color="danger" onClick={handleDelete} style={{ flex: 1 }}>
-                        <IonIcon slot="start" icon={removeIcon} />
-                        Delete
-                    </IonButton>
-                </div>
             </IonContent>
+
+            <IonFooter>
+                <IonToolbar>
+                    <div className="ion-padding" style={{ display: 'flex', gap: '12px' }}>
+                        <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1, margin: 0 }}>
+                            <IonIcon slot="start" icon={checkIcon} />
+                            Save
+                        </IonButton>
+                        <IonButton expand="block" color="danger" onClick={handleDelete} style={{ flex: 1, margin: 0 }}>
+                            <IonIcon slot="start" icon={removeIcon} />
+                            Delete
+                        </IonButton>
+                    </div>
+                </IonToolbar>
+            </IonFooter>
         </IonModal>
     );
 };

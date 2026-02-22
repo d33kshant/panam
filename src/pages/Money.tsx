@@ -44,7 +44,7 @@ const Money: React.FC = () => {
                     </IonButton>
                 </div>
             </IonContent>
-            <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} showGroupField={false} />
+            <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
             <ViewTransactionModal
                 isOpen={isViewModalOpen}
                 onClose={() => setIsViewModalOpen(false)}

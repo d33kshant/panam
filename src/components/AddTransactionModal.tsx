@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     IonModal,
     IonHeader,
+    IonFooter,
     IonToolbar,
     IonTitle,
     IonContent,
@@ -17,16 +18,14 @@ import {
 import addIcon from './icons/add.svg';
 import { TransactionService } from '../services/TransactionService';
 import { Category, CategoryService } from '../services/CategoryService';
-import { Group, GroupService } from '../services/GroupService';
 import { useAuth } from '../contexts/AuthContext';
 
 interface AddTransactionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    showGroupField?: boolean;
 }
 
-const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose, showGroupField = true }) => {
+const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
@@ -34,35 +33,33 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
-    const [groupId, setGroupId] = useState<string | undefined>(undefined);
     const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
-    const [groups, setGroups] = useState<Group[]>(GroupService.getAll());
 
     useEffect(() => {
         const unsubCat = CategoryService.subscribe(() => {
             setCategories(CategoryService.getAll());
         });
-        const unsubGroup = GroupService.subscribe(() => {
-            setGroups(GroupService.getAll());
-        });
         return () => {
             unsubCat();
-            unsubGroup();
         };
     }, []);
 
     const handleAdd = async () => {
         if (!title || !amount || !user) return;
-        await TransactionService.create({
+
+        const data: any = {
             title,
             subtitle,
             amount: parseFloat(amount) || 0,
             type,
             date,
-            categoryId,
-            groupId,
             author: user.uid,
-        });
+        };
+
+        if (categoryId) data.categoryId = categoryId;
+
+        await TransactionService.create(data);
+
         // Reset form
         setTitle('');
         setSubtitle('');
@@ -70,7 +67,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         setType('expense');
         setDate(new Date().toISOString().split('T')[0]);
         setCategoryId(undefined);
-        setGroupId(undefined);
         onClose();
     };
 
@@ -139,24 +135,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                             ))}
                         </IonSelect>
                     </IonItem>
-                    {showGroupField && (
-                        <IonItem>
-                            <IonSelect
-                                label="Group"
-                                labelPlacement="stacked"
-                                value={groupId}
-                                onIonChange={(e) => setGroupId(e.detail.value || undefined)}
-                                placeholder="None"
-                            >
-                                <IonSelectOption value={undefined}>None</IonSelectOption>
-                                {groups.map((g) => (
-                                    <IonSelectOption key={g.id} value={g.id}>
-                                        {g.name}
-                                    </IonSelectOption>
-                                ))}
-                            </IonSelect>
-                        </IonItem>
-                    )}
                     <IonItem>
                         <IonInput
                             label="Date"
@@ -167,19 +145,18 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                         />
                     </IonItem>
                 </IonList>
-
-                <div style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    left: '16px',
-                    right: '16px',
-                }}>
-                    <IonButton expand="block" onClick={handleAdd}>
-                        <IonIcon slot="start" icon={addIcon} />
-                        Add
-                    </IonButton>
-                </div>
             </IonContent>
+
+            <IonFooter>
+                <IonToolbar>
+                    <div className="ion-padding">
+                        <IonButton expand="block" onClick={handleAdd}>
+                            <IonIcon slot="start" icon={addIcon} />
+                            Add
+                        </IonButton>
+                    </div>
+                </IonToolbar>
+            </IonFooter>
         </IonModal>
     );
 };
