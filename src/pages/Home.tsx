@@ -1,5 +1,6 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import WeekChart from '../components/WeekChart';
+import MonthChart from '../components/MonthChart';
 
 const Home: React.FC = () => {
     return (
@@ -16,6 +17,7 @@ const Home: React.FC = () => {
                     </IonToolbar>
                 </IonHeader>
                 <WeekChart />
+                <MonthChart />
             </IonContent>
         </IonPage>
     );
