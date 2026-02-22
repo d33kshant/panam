@@ -37,7 +37,16 @@ export const categoryIcons: Record<string, string> = {
     misc: miscIcon,
 };
 
-export const DEFAULT_CATEGORY_ID = '';
+export const MISC_CATEGORY: Category = {
+    id: '__misc__',
+    name: 'Miscellaneous',
+    description: 'Uncategorized transactions',
+    icon: 'misc',
+    author: '',
+    amount: 0,
+};
+
+export const DEFAULT_CATEGORY_ID = MISC_CATEGORY.id;
 
 let categories: Category[] = [];
 let listeners: (() => void)[] = [];
@@ -83,10 +92,11 @@ export const CategoryService = {
     },
 
     getAll(): Category[] {
-        return [...categories];
+        return [...categories, MISC_CATEGORY];
     },
 
     getById(id: string): Category | undefined {
+        if (id === MISC_CATEGORY.id) return MISC_CATEGORY;
         return categories.find((cat) => cat.id === id);
     },
 

@@ -10,7 +10,7 @@ import {
     IonItem,
     IonAvatar,
 } from '@ionic/react';
-import { Category, CategoryService, categoryIcons } from '../services/CategoryService';
+import { Category, CategoryService, categoryIcons, MISC_CATEGORY } from '../services/CategoryService';
 
 interface CategoriesProps {
     onCategoryClick?: (category: Category) => void;
@@ -26,6 +26,8 @@ const Categories: React.FC<CategoriesProps> = ({ onCategoryClick, onAddClick }) 
         });
         return unsubscribe;
     }, []);
+
+    const isReadOnly = (cat: Category) => cat.id === MISC_CATEGORY.id;
 
     return (
         <IonCard>
@@ -43,9 +45,9 @@ const Categories: React.FC<CategoriesProps> = ({ onCategoryClick, onAddClick }) 
                     {categories.map((cat) => (
                         <IonItem
                             key={cat.id}
-                            button
-                            detail
-                            onClick={() => onCategoryClick?.(cat)}
+                            button={!isReadOnly(cat)}
+                            detail={!isReadOnly(cat)}
+                            onClick={() => !isReadOnly(cat) && onCategoryClick?.(cat)}
                         >
                             <IonAvatar slot="start" style={{
                                 display: 'flex',
