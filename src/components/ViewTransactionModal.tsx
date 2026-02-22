@@ -11,6 +11,7 @@ import {
     IonIcon,
     IonItem,
     IonInput,
+    IonLabel,
     IonSelect,
     IonSelectOption,
     IonList,
@@ -43,7 +44,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
     }, []);
 
     useEffect(() => {
-        if (transaction) {
+        if (isOpen && transaction) {
             setTitle(transaction.title);
             setSubtitle(transaction.subtitle);
             setAmount(String(transaction.amount));
@@ -51,10 +52,18 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
             setDate(transaction.date);
             setCategoryId(transaction.categoryId);
         }
-    }, [transaction]);
+    }, [isOpen, transaction]);
+
+    // ── Validation ────────────────────────────────────────────────
+    const errors: string[] = [];
+    if (!title.trim()) errors.push('Title is required');
+    const parsedAmount = parseFloat(amount);
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) errors.push('Amount is required');
+    if (!date) errors.push('Date is required');
+    const isValid = errors.length === 0 && !!transaction;
 
     const handleUpdate = async () => {
-        if (!transaction) return;
+        if (!isValid) return;
         const data: any = {
             title,
             subtitle,
@@ -153,13 +162,20 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({ isOpen, onC
                             onIonInput={(e) => setDate(e.detail.value || '')}
                         />
                     </IonItem>
+                    {errors.length > 0 && (
+                        <IonItem>
+                            <IonLabel color="danger" className="ion-text-center">
+                                {errors.join(' • ')}
+                            </IonLabel>
+                        </IonItem>
+                    )}
                 </IonList>
             </IonContent>
 
             <IonFooter>
                 <IonToolbar>
                     <div className="ion-padding" style={{ display: 'flex', gap: '12px' }}>
-                        <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1, margin: 0 }}>
+                        <IonButton expand="block" onClick={handleUpdate} disabled={!isValid} style={{ flex: 1, margin: 0 }}>
                             <IonIcon slot="start" icon={checkIcon} />
                             Save
                         </IonButton>

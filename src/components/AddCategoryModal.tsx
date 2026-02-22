@@ -11,6 +11,7 @@ import {
     IonIcon,
     IonItem,
     IonInput,
+    IonLabel,
     IonSelect,
     IonSelectOption,
     IonList,
@@ -31,8 +32,15 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) 
     const [icon, setIcon] = useState('food');
     const [amount, setAmount] = useState('');
 
+    // ── Validation ────────────────────────────────────────────────
+    const errors: string[] = [];
+    if (!name.trim()) errors.push('Name is required');
+    const parsedBudget = parseFloat(amount);
+    if (amount && (isNaN(parsedBudget) || parsedBudget < 0)) errors.push('Budget must be ≥ 0');
+    const isValid = errors.length === 0 && !!user;
+
     const handleAdd = async () => {
-        if (!name || !user) return;
+        if (!isValid) return;
         await CategoryService.create({
             name,
             description,
@@ -102,13 +110,20 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) 
                             ))}
                         </IonSelect>
                     </IonItem>
+                    {errors.length > 0 && (
+                        <IonItem>
+                            <IonLabel color="danger" className="ion-text-center">
+                                {errors.join(' • ')}
+                            </IonLabel>
+                        </IonItem>
+                    )}
                 </IonList>
             </IonContent>
 
             <IonFooter>
                 <IonToolbar>
                     <div className="ion-padding">
-                        <IonButton expand="block" onClick={handleAdd}>
+                        <IonButton expand="block" onClick={handleAdd} disabled={!isValid}>
                             <IonIcon slot="start" icon={addIcon} />
                             Add
                         </IonButton>

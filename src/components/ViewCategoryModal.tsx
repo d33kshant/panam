@@ -11,6 +11,7 @@ import {
     IonIcon,
     IonItem,
     IonInput,
+    IonLabel,
     IonSelect,
     IonSelectOption,
     IonList,
@@ -32,16 +33,23 @@ const ViewCategoryModal: React.FC<ViewCategoryModalProps> = ({ isOpen, onClose, 
     const [amount, setAmount] = useState('');
 
     useEffect(() => {
-        if (category) {
+        if (isOpen && category) {
             setName(category.name);
             setDescription(category.description);
             setIcon(category.icon);
             setAmount(String(category.amount || 0));
         }
-    }, [category]);
+    }, [isOpen, category]);
+
+    // ── Validation ────────────────────────────────────────────────
+    const errors: string[] = [];
+    if (!name.trim()) errors.push('Name is required');
+    const parsedBudget = parseFloat(amount);
+    if (amount && (isNaN(parsedBudget) || parsedBudget < 0)) errors.push('Budget must be ≥ 0');
+    const isValid = errors.length === 0 && !!category;
 
     const handleUpdate = async () => {
-        if (!category) return;
+        if (!isValid) return;
         await CategoryService.update(category.id, {
             name,
             description,
@@ -108,13 +116,20 @@ const ViewCategoryModal: React.FC<ViewCategoryModalProps> = ({ isOpen, onClose, 
                             ))}
                         </IonSelect>
                     </IonItem>
+                    {errors.length > 0 && (
+                        <IonItem>
+                            <IonLabel color="danger" className="ion-text-center">
+                                {errors.join(' • ')}
+                            </IonLabel>
+                        </IonItem>
+                    )}
                 </IonList>
             </IonContent>
 
             <IonFooter>
                 <IonToolbar>
                     <div className="ion-padding" style={{ display: 'flex', gap: '12px' }}>
-                        <IonButton expand="block" onClick={handleUpdate} style={{ flex: 1, margin: 0 }}>
+                        <IonButton expand="block" onClick={handleUpdate} disabled={!isValid} style={{ flex: 1, margin: 0 }}>
                             <IonIcon slot="start" icon={checkIcon} />
                             Save
                         </IonButton>

@@ -11,13 +11,14 @@ import {
     IonIcon,
     IonItem,
     IonInput,
+    IonLabel,
     IonSelect,
     IonSelectOption,
     IonList,
 } from '@ionic/react';
 import addIcon from './icons/add.svg';
 import { TransactionService } from '../services/TransactionService';
-import { Category, CategoryService } from '../services/CategoryService';
+import { Category, CategoryService, DEFAULT_CATEGORY_ID } from '../services/CategoryService';
 import { useAuth } from '../contexts/AuthContext';
 
 interface AddTransactionModalProps {
@@ -32,7 +33,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
+    const [categoryId, setCategoryId] = useState<string>(DEFAULT_CATEGORY_ID);
     const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
 
     useEffect(() => {
@@ -44,8 +45,16 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         };
     }, []);
 
+    // ── Validation ────────────────────────────────────────────────
+    const errors: string[] = [];
+    if (!title.trim()) errors.push('Title is required');
+    const parsedAmount = parseFloat(amount);
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) errors.push('Amount is required');
+    if (!date) errors.push('Date is required');
+    const isValid = errors.length === 0 && !!user;
+
     const handleAdd = async () => {
-        if (!title || !amount || !user) return;
+        if (!isValid) return;
 
         const data: any = {
             title,
@@ -66,7 +75,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         setAmount('');
         setType('expense');
         setDate(new Date().toISOString().split('T')[0]);
-        setCategoryId(undefined);
+        setCategoryId(DEFAULT_CATEGORY_ID);
         onClose();
     };
 
@@ -144,13 +153,20 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
                             onIonInput={(e) => setDate(e.detail.value || '')}
                         />
                     </IonItem>
+                    {errors.length > 0 && (
+                        <IonItem>
+                            <IonLabel color="danger" className="ion-text-center">
+                                {errors.join(' • ')}
+                            </IonLabel>
+                        </IonItem>
+                    )}
                 </IonList>
             </IonContent>
 
             <IonFooter>
                 <IonToolbar>
                     <div className="ion-padding">
-                        <IonButton expand="block" onClick={handleAdd}>
+                        <IonButton expand="block" onClick={handleAdd} disabled={!isValid}>
                             <IonIcon slot="start" icon={addIcon} />
                             Add
                         </IonButton>
