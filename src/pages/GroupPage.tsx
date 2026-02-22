@@ -19,18 +19,21 @@ import {
     IonCardContent,
     IonToast,
     useIonActionSheet,
+    IonButton,
 } from '@ionic/react';
 import { personOutline } from 'ionicons/icons';
 import groupIcon from '../components/icons/group.svg';
 import receiptIcon from '../components/icons/receipt.svg';
+import addIcon from '../components/icons/add.svg';
 import { GroupService, Group } from '../services/GroupService';
-import { TransactionService, Transaction } from '../services/TransactionService';
 import { CategoryService, categoryIcons } from '../services/CategoryService';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
-interface MemberInfo {
+import AddExpenseModal from '../components/AddExpenseModal';
+
+export interface MemberInfo {
     uid: string;
     name: string;
     email: string;
@@ -43,10 +46,10 @@ const GroupPage: React.FC = () => {
     const history = useHistory();
     const [presentActionSheet] = useIonActionSheet();
     const [group, setGroup] = useState<Group | undefined>(GroupService.getById(groupId));
-    const [segment, setSegment] = useState<'members' | 'transactions'>('members');
+    const [segment, setSegment] = useState<'expense' | 'members'>('expense');
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [transactions, setTransactions] = useState<Transaction[]>(TransactionService.getAll());
     const [toastMessage, setToastMessage] = useState('');
+    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
     // Listen for group updates
     useEffect(() => {
@@ -61,13 +64,7 @@ const GroupPage: React.FC = () => {
         return unsubscribe;
     }, [groupId]);
 
-    // Listen for transaction updates
-    useEffect(() => {
-        const unsubscribe = TransactionService.subscribe(() => {
-            setTransactions(TransactionService.getAll());
-        });
-        return unsubscribe;
-    }, []);
+    // Listen for transaction updates - removed because it's no longer linked
 
     // Fetch member details from Firestore users collection
     useEffect(() => {
@@ -99,10 +96,10 @@ const GroupPage: React.FC = () => {
         fetchMembers();
     }, [group?.members?.length]);
 
-    // Filter transactions belonging to this group
-    const groupTransactions = useMemo(() => {
-        return transactions.filter((tx) => tx.groupId === groupId);
-    }, [transactions, groupId]);
+    // Empty array for now until a separate Expense entity is created
+    const groupTransactions: any[] = useMemo(() => {
+        return [];
+    }, []);
 
     const getCategoryIcon = (categoryId?: string) => {
         if (!categoryId) return null;
@@ -111,9 +108,9 @@ const GroupPage: React.FC = () => {
         return categoryIcons[category.icon];
     };
 
-    const formatAmount = (tx: Transaction) => {
-        const prefix = tx.type === 'income' ? '+ ' : '';
-        return `${prefix}₹${tx.amount.toLocaleString()}`;
+    const formatAmount = (amount: number, type: 'income' | 'expense') => {
+        const prefix = type === 'income' ? '+ ' : '';
+        return `${prefix}₹${amount.toLocaleString()}`;
     };
 
     const handleHeaderClick = () => {
@@ -236,16 +233,59 @@ const GroupPage: React.FC = () => {
                 <div className="ion-padding-horizontal">
                     <IonSegment
                         value={segment}
-                        onIonChange={(e) => setSegment(e.detail.value as 'members' | 'transactions')}
+                        onIonChange={(e) => setSegment(e.detail.value as 'expense' | 'members')}
                     >
+                        <IonSegmentButton value="expense">
+                            <IonLabel>Expenses ({groupTransactions.length})</IonLabel>
+                        </IonSegmentButton>
                         <IonSegmentButton value="members">
                             <IonLabel>Members ({group.members.length})</IonLabel>
                         </IonSegmentButton>
-                        <IonSegmentButton value="transactions">
-                            <IonLabel>Transactions ({groupTransactions.length})</IonLabel>
-                        </IonSegmentButton>
                     </IonSegment>
                 </div>
+
+                {/* Expenses segment */}
+                {segment === 'expense' && (
+                    <IonCard>
+                        {groupTransactions.length === 0 ? (
+                            <IonCardContent className="ion-text-center ion-padding">
+                                <p>No expenses in this group yet.</p>
+                            </IonCardContent>
+                        ) : (
+                            <IonList>
+                                {groupTransactions.map((tx) => {
+                                    const catIcon = getCategoryIcon(tx.categoryId);
+                                    return (
+                                        <IonItem key={tx.id}>
+                                            <IonAvatar slot="start" style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: 'var(--ion-background-color-step-200)',
+                                            }}>
+                                                {catIcon ? (
+                                                    <IonIcon icon={catIcon} />
+                                                ) : (
+                                                    <IonIcon icon={receiptIcon} />
+                                                )}
+                                            </IonAvatar>
+                                            <IonLabel>
+                                                <h3>{tx.title}</h3>
+                                                <p>{tx.subtitle}</p>
+                                            </IonLabel>
+                                            <IonLabel
+                                                slot="end"
+                                                color={tx.type === 'income' ? 'success' : undefined}
+                                            >
+                                                {formatAmount(tx.amount, tx.type || 'expense')}
+                                            </IonLabel>
+                                        </IonItem>
+                                    );
+                                })}
+                            </IonList>
+                        )}
+                    </IonCard>
+                )}
 
                 {/* Members segment */}
                 {segment === 'members' && (
@@ -285,49 +325,27 @@ const GroupPage: React.FC = () => {
                     </IonCard>
                 )}
 
-                {/* Transactions segment */}
-                {segment === 'transactions' && (
-                    <IonCard>
-                        {groupTransactions.length === 0 ? (
-                            <IonCardContent className="ion-text-center ion-padding">
-                                <p>No transactions in this group yet.</p>
-                            </IonCardContent>
-                        ) : (
-                            <IonList>
-                                {groupTransactions.map((tx) => {
-                                    const catIcon = getCategoryIcon(tx.categoryId);
-                                    return (
-                                        <IonItem key={tx.id}>
-                                            <IonAvatar slot="start" style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                backgroundColor: 'var(--ion-background-color-step-200)',
-                                            }}>
-                                                {catIcon ? (
-                                                    <IonIcon icon={catIcon} />
-                                                ) : (
-                                                    <IonIcon icon={receiptIcon} />
-                                                )}
-                                            </IonAvatar>
-                                            <IonLabel>
-                                                <h3>{tx.title}</h3>
-                                                <p>{tx.subtitle}</p>
-                                            </IonLabel>
-                                            <IonLabel
-                                                slot="end"
-                                                color={tx.type === 'income' ? 'success' : undefined}
-                                            >
-                                                {formatAmount(tx)}
-                                            </IonLabel>
-                                        </IonItem>
-                                    );
-                                })}
-                            </IonList>
-                        )}
-                    </IonCard>
-                )}
+                <div style={{
+                    position: 'fixed',
+                    bottom: '16px',
+                    right: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    zIndex: 1000,
+                }}>
+                    <IonButton shape="round" onClick={() => setIsExpenseModalOpen(true)}>
+                        <IonIcon slot="start" icon={addIcon} />
+                        Add Expense
+                    </IonButton>
+                </div>
             </IonContent>
+
+            <AddExpenseModal
+                isOpen={isExpenseModalOpen}
+                onClose={() => setIsExpenseModalOpen(false)}
+                members={members}
+            />
 
             <IonToast
                 isOpen={!!toastMessage}

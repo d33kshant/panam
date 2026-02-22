@@ -19,7 +19,6 @@ export interface Transaction {
     type: 'income' | 'expense';
     date: string;
     categoryId?: string;
-    groupId?: string;
     author: string;
 }
 
