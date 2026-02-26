@@ -41,7 +41,7 @@ function getMonthTransactions(transactions: Transaction[]): Transaction[] {
     });
 }
 
-const MonthChart: React.FC = () => {
+const MonthChart: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
     const [transactions, setTransactions] = useState<Transaction[]>(TransactionService.getAll());
     const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
 
@@ -134,7 +134,7 @@ const MonthChart: React.FC = () => {
     const hasData = chartData.datasets[0].data.length > 0;
 
     return (
-        <IonCard>
+        <IonCard style={style}>
             <IonListHeader>
                 <IonLabel><h2><strong>This Month</strong></h2></IonLabel>
             </IonListHeader>

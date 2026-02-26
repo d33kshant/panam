@@ -55,7 +55,7 @@ function getWeekTransactions(transactions: Transaction[]): Transaction[] {
     });
 }
 
-const WeekChart: React.FC = () => {
+const WeekChart: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
     const [transactions, setTransactions] = useState<Transaction[]>(TransactionService.getAll());
     const [categories, setCategories] = useState<Category[]>(CategoryService.getAll());
 
@@ -182,7 +182,7 @@ const WeekChart: React.FC = () => {
     }), []);
 
     return (
-        <IonCard>
+        <IonCard style={style}>
             <IonListHeader>
                 <IonLabel><h2><strong>This Week</strong></h2></IonLabel>
             </IonListHeader>
