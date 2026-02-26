@@ -26,7 +26,8 @@ import groupIcon from '../components/icons/group.svg';
 import receiptIcon from '../components/icons/receipt.svg';
 import addIcon from '../components/icons/add.svg';
 import { GroupService, Group } from '../services/GroupService';
-import { CategoryService, categoryIcons } from '../services/CategoryService';
+import { ExpenseService, Expense } from '../services/ExpenseService';
+
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -46,8 +47,9 @@ const GroupPage: React.FC = () => {
     const history = useHistory();
     const [presentActionSheet] = useIonActionSheet();
     const [group, setGroup] = useState<Group | undefined>(GroupService.getById(groupId));
-    const [segment, setSegment] = useState<'expense' | 'members'>('expense');
+    const [segment, setSegment] = useState<'overview' | 'expense' | 'members'>('overview');
     const [members, setMembers] = useState<MemberInfo[]>([]);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
     const [toastMessage, setToastMessage] = useState('');
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
@@ -64,7 +66,18 @@ const GroupPage: React.FC = () => {
         return unsubscribe;
     }, [groupId]);
 
-    // Listen for transaction updates - removed because it's no longer linked
+    // Listen for expense updates
+    useEffect(() => {
+        ExpenseService.listen(groupId);
+        setExpenses(ExpenseService.getAll());
+        const unsubscribe = ExpenseService.subscribe(() => {
+            setExpenses(ExpenseService.getAll());
+        });
+        return () => {
+            unsubscribe();
+            ExpenseService.stopListening();
+        };
+    }, [groupId]);
 
     // Fetch member details from Firestore users collection
     useEffect(() => {
@@ -96,22 +109,53 @@ const GroupPage: React.FC = () => {
         fetchMembers();
     }, [group?.members?.length]);
 
-    // Empty array for now until a separate Expense entity is created
-    const groupTransactions: any[] = useMemo(() => {
-        return [];
-    }, []);
-
-    const getCategoryIcon = (categoryId?: string) => {
-        if (!categoryId) return null;
-        const category = CategoryService.getById(categoryId);
-        if (!category) return null;
-        return categoryIcons[category.icon];
+    /** Resolve member uids to display names */
+    const getMemberNames = (splits: Record<string, any>): string => {
+        const uids = Object.keys(splits);
+        return uids
+            .map((uid) => members.find((m) => m.uid === uid)?.name || 'Unknown')
+            .join(', ');
     };
 
-    const formatAmount = (amount: number, type: 'income' | 'expense') => {
-        const prefix = type === 'income' ? '+ ' : '';
-        return `${prefix}₹${amount.toLocaleString()}`;
-    };
+    /**
+     * Compute balance for each other member relative to the current user.
+     * For member X:
+     *   theyOweMe = sum of X's unsettled split amounts in expenses created by current user
+     *   iOweThem  = sum of my unsettled split amounts in expenses created by X
+     *   balance   = theyOweMe - iOweThem
+     *   positive → they owe me (green), negative → I owe them (red)
+     */
+    const memberBalances = useMemo(() => {
+        if (!user) return {};
+        const balances: Record<string, number> = {};
+
+        const otherMembers = members.filter((m) => m.uid !== user.uid);
+        for (const member of otherMembers) {
+            let theyOweMe = 0;
+            let iOweThem = 0;
+
+            for (const expense of expenses) {
+                // Expenses I created where this member has an unsettled split
+                if (expense.createdBy === user.uid) {
+                    const split = expense.splits[member.uid];
+                    if (split && !split.settled) {
+                        theyOweMe += split.amount;
+                    }
+                }
+                // Expenses this member created where I have an unsettled split
+                if (expense.createdBy === member.uid) {
+                    const split = expense.splits[user.uid];
+                    if (split && !split.settled) {
+                        iOweThem += split.amount;
+                    }
+                }
+            }
+
+            balances[member.uid] = parseFloat((theyOweMe - iOweThem).toFixed(2));
+        }
+
+        return balances;
+    }, [expenses, members, user]);
 
     const handleHeaderClick = () => {
         if (!group || !user) return;
@@ -233,10 +277,13 @@ const GroupPage: React.FC = () => {
                 <div className="ion-padding-horizontal">
                     <IonSegment
                         value={segment}
-                        onIonChange={(e) => setSegment(e.detail.value as 'expense' | 'members')}
+                        onIonChange={(e) => setSegment(e.detail.value as 'overview' | 'expense' | 'members')}
                     >
+                        <IonSegmentButton value="overview">
+                            <IonLabel>Overview</IonLabel>
+                        </IonSegmentButton>
                         <IonSegmentButton value="expense">
-                            <IonLabel>Expenses ({groupTransactions.length})</IonLabel>
+                            <IonLabel>Expenses ({expenses.length})</IonLabel>
                         </IonSegmentButton>
                         <IonSegmentButton value="members">
                             <IonLabel>Members ({group.members.length})</IonLabel>
@@ -244,44 +291,90 @@ const GroupPage: React.FC = () => {
                     </IonSegment>
                 </div>
 
+                {/* Overview segment */}
+                {segment === 'overview' && (
+                    <IonCard>
+                        {members.filter((m) => m.uid !== user?.uid).length === 0 ? (
+                            <IonCardContent className="ion-text-center ion-padding">
+                                <p>No other members in this group.</p>
+                            </IonCardContent>
+                        ) : (
+                            <IonList>
+                                {members
+                                    .filter((m) => m.uid !== user?.uid)
+                                    .map((member) => {
+                                        const balance = memberBalances[member.uid] ?? 0;
+                                        const isPositive = balance > 0;
+                                        const isNegative = balance < 0;
+                                        return (
+                                            <IonItem key={member.uid} button routerLink={`/money/groups/${groupId}/balance/${member.uid}`}>
+                                                <IonAvatar slot="start">
+                                                    {member.avatar ? (
+                                                        <img src={member.avatar} alt="avatar" />
+                                                    ) : (
+                                                        <div style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            backgroundColor: 'var(--ion-background-color-step-200)',
+                                                        }}>
+                                                            <IonIcon icon={personOutline} />
+                                                        </div>
+                                                    )}
+                                                </IonAvatar>
+                                                <IonLabel>
+                                                    <h3>{member.name}</h3>
+                                                    <p>
+                                                        {isPositive && 'owes you'}
+                                                        {isNegative && 'you owe'}
+                                                        {!isPositive && !isNegative && 'settled up'}
+                                                    </p>
+                                                </IonLabel>
+                                                <IonLabel
+                                                    slot="end"
+                                                    color={isPositive ? 'success' : isNegative ? 'danger' : 'medium'}
+                                                    style={{ fontWeight: 600 }}
+                                                >
+                                                    {balance === 0 ? '₹0' : `₹${Math.abs(balance).toLocaleString()}`}
+                                                </IonLabel>
+                                            </IonItem>
+                                        );
+                                    })}
+                            </IonList>
+                        )}
+                    </IonCard>
+                )}
+
                 {/* Expenses segment */}
                 {segment === 'expense' && (
                     <IonCard>
-                        {groupTransactions.length === 0 ? (
+                        {expenses.length === 0 ? (
                             <IonCardContent className="ion-text-center ion-padding">
                                 <p>No expenses in this group yet.</p>
                             </IonCardContent>
                         ) : (
                             <IonList>
-                                {groupTransactions.map((tx) => {
-                                    const catIcon = getCategoryIcon(tx.categoryId);
-                                    return (
-                                        <IonItem key={tx.id}>
-                                            <IonAvatar slot="start" style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                backgroundColor: 'var(--ion-background-color-step-200)',
-                                            }}>
-                                                {catIcon ? (
-                                                    <IonIcon icon={catIcon} />
-                                                ) : (
-                                                    <IonIcon icon={receiptIcon} />
-                                                )}
-                                            </IonAvatar>
-                                            <IonLabel>
-                                                <h3>{tx.title}</h3>
-                                                <p>{tx.subtitle}</p>
-                                            </IonLabel>
-                                            <IonLabel
-                                                slot="end"
-                                                color={tx.type === 'income' ? 'success' : undefined}
-                                            >
-                                                {formatAmount(tx.amount, tx.type || 'expense')}
-                                            </IonLabel>
-                                        </IonItem>
-                                    );
-                                })}
+                                {expenses.map((expense) => (
+                                    <IonItem key={expense.id} button routerLink={`/money/groups/${groupId}/expenses/${expense.id}`}>
+                                        <IonAvatar slot="start" style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: 'var(--ion-background-color-step-200)',
+                                        }}>
+                                            <IonIcon icon={receiptIcon} />
+                                        </IonAvatar>
+                                        <IonLabel>
+                                            <h3>{expense.note}</h3>
+                                            <p>{getMemberNames(expense.splits)}</p>
+                                        </IonLabel>
+                                        <IonLabel slot="end">
+                                            ₹{expense.totalAmount.toLocaleString()}
+                                        </IonLabel>
+                                    </IonItem>
+                                ))}
                             </IonList>
                         )}
                     </IonCard>
@@ -345,6 +438,8 @@ const GroupPage: React.FC = () => {
                 isOpen={isExpenseModalOpen}
                 onClose={() => setIsExpenseModalOpen(false)}
                 members={members}
+                groupId={groupId}
+                onAdd={() => setToastMessage('Expense added!')}
             />
 
             <IonToast

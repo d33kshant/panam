@@ -24,6 +24,8 @@ import CategoriesPage from './pages/CategoriesPage';
 import TransactionsPage from './pages/TransactionsPage';
 import GroupsPage from './pages/GroupsPage';
 import GroupPage from './pages/GroupPage';
+import ExpensePage from './pages/ExpensePage';
+import BalancePage from './pages/BalancePage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 /* Core CSS required for Ionic components to work properly */
@@ -81,6 +83,12 @@ const AppTabs: React.FC = () => {
                 </Route>
                 <Route exact path="/money/transactions">
                     <TransactionsPage />
+                </Route>
+                <Route exact path="/money/groups/:groupId/balance/:memberId">
+                    <BalancePage />
+                </Route>
+                <Route exact path="/money/groups/:groupId/expenses/:expenseId">
+                    <ExpensePage />
                 </Route>
                 <Route exact path="/money/groups/:groupId">
                     <GroupPage />

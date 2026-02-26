@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { ExpenseService } from '../services/ExpenseService';
 import {
     IonModal,
     IonHeader,
@@ -32,6 +34,8 @@ interface AddExpenseModalProps {
     isOpen: boolean;
     onClose: () => void;
     members: MemberInfo[];
+    groupId: string;
+    onAdd?: () => void;
 }
 
 type SplitType = 'even' | 'percent' | 'amount' | 'shares';
@@ -233,7 +237,8 @@ function validate(
     return { isValid: errors.length === 0, errors, finalAmounts };
 }
 
-const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, members }) => {
+const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, members, groupId, onAdd }) => {
+    const { user } = useAuth();
     const [splitType, setSplitType] = React.useState<SplitType>('even');
     const [openAccordions, setOpenAccordions] = React.useState<string | string[]>(['details']);
     const [selectedMembers, setSelectedMembers] = React.useState<string[]>([]);
@@ -542,7 +547,30 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, memb
             <IonFooter>
                 <IonToolbar>
                     <div className="ion-padding">
-                        <IonButton expand="block" disabled={!isValid}>
+                        <IonButton
+                            expand="block"
+                            disabled={!isValid}
+                            onClick={async () => {
+                                if (!isValid || !user) return;
+                                const splits: Record<string, { amount: number; settled: boolean }> = {};
+                                for (const uid of selectedMembers) {
+                                    splits[uid] = {
+                                        amount: finalAmounts[uid],
+                                        settled: uid === user.uid,
+                                    };
+                                }
+                                await ExpenseService.create({
+                                    groupId,
+                                    note: note.trim(),
+                                    totalAmount: parsedTotal,
+                                    createdBy: user.uid,
+                                    createdAt: new Date().toISOString(),
+                                    splits,
+                                });
+                                onClose();
+                                onAdd?.();
+                            }}
+                        >
                             <IonIcon slot="start" icon={addIcon} />
                             Add
                         </IonButton>
