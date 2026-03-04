@@ -4,6 +4,7 @@ import { AuthService } from '../services/AuthService';
 import { CategoryService } from '../services/CategoryService';
 import { TransactionService } from '../services/TransactionService';
 import { GroupService } from '../services/GroupService';
+import { NotificationService } from '../services/NotificationService';
 
 interface AuthContextValue {
     user: User | null;
@@ -28,11 +29,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 CategoryService.listen(firebaseUser.uid);
                 TransactionService.listen(firebaseUser.uid);
                 GroupService.listen(firebaseUser.uid);
+                NotificationService.listen(firebaseUser.uid);
             } else {
                 // Stop listening on logout
                 CategoryService.stopListening();
                 TransactionService.stopListening();
                 GroupService.stopListening();
+                NotificationService.stopListening();
             }
         });
         return unsubscribe;

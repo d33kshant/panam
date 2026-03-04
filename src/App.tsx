@@ -26,6 +26,7 @@ import GroupsPage from './pages/GroupsPage';
 import GroupPage from './pages/GroupPage';
 import ExpensePage from './pages/ExpensePage';
 import BalancePage from './pages/BalancePage';
+import NotificationPage from './pages/NotificationPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 /* Core CSS required for Ionic components to work properly */
@@ -80,6 +81,9 @@ const AppTabs: React.FC = () => {
             <IonRouterOutlet>
                 <Route exact path="/home">
                     <Home />
+                </Route>
+                <Route exact path="/notifications">
+                    <NotificationPage />
                 </Route>
                 <Route exact path="/money/transactions">
                     <TransactionsPage />
