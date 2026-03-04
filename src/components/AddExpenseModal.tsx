@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { ExpenseService } from '../services/ExpenseService';
+import { NotificationService } from '../services/NotificationService';
 import {
     IonModal,
     IonHeader,
@@ -559,7 +560,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, memb
                                         settled: uid === user.uid,
                                     };
                                 }
-                                await ExpenseService.create({
+                                const created = await ExpenseService.create({
                                     groupId,
                                     note: note.trim(),
                                     totalAmount: parsedTotal,
@@ -567,6 +568,17 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, memb
                                     createdAt: new Date().toISOString(),
                                     splits,
                                 });
+                                // Notify other members
+                                const otherMembers = selectedMembers.filter((uid) => uid !== user.uid);
+                                if (otherMembers.length > 0) {
+                                    const creatorName = user.displayName || 'Someone';
+                                    const message = `${creatorName} added "${note.trim()}" — ₹${parsedTotal.toLocaleString()}`;
+                                    await NotificationService.sendToMany(
+                                        otherMembers,
+                                        message,
+                                        `exp:${groupId}:${created.id}`,
+                                    );
+                                }
                                 onClose();
                                 onAdd?.();
                             }}

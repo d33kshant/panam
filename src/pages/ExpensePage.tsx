@@ -22,6 +22,7 @@ import { personOutline, checkmarkCircle } from 'ionicons/icons';
 import settleIcon from '../components/icons/settle.svg';
 import removeIcon from '../components/icons/remove.svg';
 import { ExpenseService, Expense } from '../services/ExpenseService';
+import { NotificationService } from '../services/NotificationService';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -91,6 +92,15 @@ const ExpensePage: React.FC = () => {
         if (!expense || !user) return;
         try {
             await ExpenseService.settleMember(expense.id, user.uid);
+            // Notify the expense creator
+            if (expense.createdBy !== user.uid) {
+                const settlerName = user.displayName || 'Someone';
+                await NotificationService.sendToMany(
+                    [expense.createdBy],
+                    `${settlerName} settled "${expense.note}"`,
+                    `exp:${groupId}:${expense.id}`,
+                );
+            }
             setToastMessage('Expense settled!');
         } catch (err: any) {
             setToastMessage(err?.message || 'Failed to settle expense.');

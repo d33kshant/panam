@@ -22,6 +22,7 @@ import {
 import { personOutline } from 'ionicons/icons';
 import receiptIcon from '../components/icons/receipt.svg';
 import { ExpenseService, Expense } from '../services/ExpenseService';
+import { NotificationService } from '../services/NotificationService';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -141,6 +142,15 @@ const BalancePage: React.FC = () => {
                 handler: async () => {
                     try {
                         await ExpenseService.settleMember(expense.id, user!.uid);
+                        // Notify the expense creator
+                        if (expense.createdBy !== user!.uid) {
+                            const settlerName = user!.displayName || 'Someone';
+                            await NotificationService.sendToMany(
+                                [expense.createdBy],
+                                `${settlerName} settled "${expense.note}"`,
+                                `exp:${groupId}:${expense.id}`,
+                            );
+                        }
                         setToastMessage('Expense settled!');
                     } catch (err: any) {
                         setToastMessage(err?.message || 'Failed to settle expense.');
